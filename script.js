@@ -1,6 +1,9 @@
 const SHEET_ID = '1KE8hsIJGtrpnOzCEnsDj-dZQXeLdMe4VbQ3JH68yz9g';
 const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv`;
 
+// After deploying the Apps Script web app, paste the URL here:
+const APPS_SCRIPT_URL = '';
+
 function parseCSV(text) {
   const rows = [];
   let row = [];
@@ -47,7 +50,6 @@ function buildTable(headers, dataRows) {
 
   const thead = document.createElement('thead');
 
-  // Header row
   const headerRow = document.createElement('tr');
   headers.forEach(cell => {
     const th = document.createElement('th');
@@ -56,7 +58,6 @@ function buildTable(headers, dataRows) {
   });
   thead.appendChild(headerRow);
 
-  // Filter row — dropdown only on the Category column
   const filterRow = document.createElement('tr');
   filterRow.className = 'filter-row';
   headers.forEach((header, colIndex) => {
@@ -133,6 +134,98 @@ function applyFilter() {
   rowCount.textContent = `${filtered.length} of ${dataRows.length} row${dataRows.length !== 1 ? 's' : ''}`;
 }
 
+function rebuildTable() {
+  const container = document.getElementById('sheet-container');
+  container.innerHTML = '';
+  container.appendChild(buildTable(allRows[0], allRows.slice(1)));
+  applyFilter();
+}
+
+function toggleAddForm() {
+  const existing = document.getElementById('add-form');
+  const btn = document.getElementById('add-btn');
+  if (existing) {
+    existing.remove();
+    btn.textContent = '+ Add Entry';
+  } else {
+    showAddForm();
+    btn.textContent = '✕ Cancel';
+  }
+}
+
+function showAddForm() {
+  const headers = allRows[0];
+  const inputs = [];
+
+  const form = document.createElement('form');
+  form.id = 'add-form';
+  form.className = 'add-form';
+
+  const grid = document.createElement('div');
+  grid.className = 'form-grid';
+
+  headers.forEach(header => {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'form-field';
+
+    const label = document.createElement('label');
+    label.textContent = header;
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.placeholder = `Enter ${header}…`;
+    inputs.push(input);
+
+    wrapper.appendChild(label);
+    wrapper.appendChild(input);
+    grid.appendChild(wrapper);
+  });
+
+  form.appendChild(grid);
+
+  const actions = document.createElement('div');
+  actions.className = 'form-actions';
+
+  const submitBtn = document.createElement('button');
+  submitBtn.type = 'submit';
+  submitBtn.textContent = 'Add Entry';
+  submitBtn.className = 'btn-primary';
+  actions.appendChild(submitBtn);
+  form.appendChild(actions);
+
+  form.addEventListener('submit', async e => {
+    e.preventDefault();
+    const rowData = inputs.map(inp => inp.value);
+    await submitEntry(rowData);
+  });
+
+  const container = document.getElementById('sheet-container');
+  container.parentNode.insertBefore(form, container);
+  inputs[0] && inputs[0].focus();
+}
+
+async function submitEntry(rowData) {
+  allRows.push(rowData);
+
+  const form = document.getElementById('add-form');
+  if (form) form.remove();
+  document.getElementById('add-btn').textContent = '+ Add Entry';
+
+  rebuildTable();
+
+  if (APPS_SCRIPT_URL) {
+    try {
+      await fetch(APPS_SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        body: JSON.stringify({ row: rowData }),
+      });
+    } catch (err) {
+      console.error('Could not save to sheet:', err);
+    }
+  }
+}
+
 async function loadSheet() {
   const container = document.getElementById('sheet-container');
   const status = document.getElementById('sheet-status');
@@ -148,6 +241,7 @@ async function loadSheet() {
 
     container.appendChild(buildTable(rows[0], rows.slice(1)));
     document.getElementById('search-input').addEventListener('input', applyFilter);
+    document.getElementById('add-btn').addEventListener('click', toggleAddForm);
     applyFilter();
   } catch (err) {
     status.textContent = `Could not load data: ${err.message}`;
