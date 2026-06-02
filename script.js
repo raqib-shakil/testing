@@ -2,7 +2,7 @@ const SHEET_ID = '1KE8hsIJGtrpnOzCEnsDj-dZQXeLdMe4VbQ3JH68yz9g';
 const CSV_URL = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:csv`;
 
 // After deploying the Apps Script web app, paste the URL here:
-const APPS_SCRIPT_URL = '';
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwxTeu4qd8csBSZDmgadHaf_5oNPBbADI57FsYJ-YQ_Ar6hM0FY0WF-wRKq6Xepi1hm/exec';
 
 function parseCSV(text) {
   const rows = [];
