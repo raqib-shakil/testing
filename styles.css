@@ -39,6 +39,34 @@ header p {
   padding: 24px;
 }
 
+.filter-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+#search-input {
+  flex: 1;
+  padding: 9px 14px;
+  border: 1.5px solid #d0d8f0;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  color: #1d2443;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+#search-input:focus {
+  border-color: #3a6cff;
+}
+
+.row-count {
+  font-size: 0.85rem;
+  color: #4b5578;
+  white-space: nowrap;
+}
+
 .table-wrapper {
   overflow-x: auto;
 }

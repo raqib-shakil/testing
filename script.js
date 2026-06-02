@@ -40,12 +40,14 @@ function parseCSV(text) {
   return rows.filter(r => r.some(cell => cell.trim() !== ''));
 }
 
-function renderTable(rows) {
+let allRows = [];
+
+function renderTable(dataRows, headers) {
   const table = document.createElement('table');
 
   const thead = document.createElement('thead');
   const headerRow = document.createElement('tr');
-  rows[0].forEach(cell => {
+  headers.forEach(cell => {
     const th = document.createElement('th');
     th.textContent = cell;
     headerRow.appendChild(th);
@@ -54,7 +56,7 @@ function renderTable(rows) {
   table.appendChild(thead);
 
   const tbody = document.createElement('tbody');
-  rows.slice(1).forEach(rowData => {
+  dataRows.forEach(rowData => {
     const tr = document.createElement('tr');
     rowData.forEach(cell => {
       const td = document.createElement('td');
@@ -68,9 +70,28 @@ function renderTable(rows) {
   return table;
 }
 
+function applyFilter() {
+  const query = document.getElementById('search-input').value.toLowerCase().trim();
+  const container = document.getElementById('sheet-container');
+  const rowCount = document.getElementById('row-count');
+
+  const headers = allRows[0];
+  const dataRows = allRows.slice(1);
+
+  const filtered = query
+    ? dataRows.filter(row => row.some(cell => cell.toLowerCase().includes(query)))
+    : dataRows;
+
+  container.innerHTML = '';
+  container.appendChild(renderTable(filtered, headers));
+
+  rowCount.textContent = `${filtered.length} of ${dataRows.length} row${dataRows.length !== 1 ? 's' : ''}`;
+}
+
 async function loadSheet() {
   const container = document.getElementById('sheet-container');
   const status = document.getElementById('sheet-status');
+  const filterBar = document.getElementById('filter-bar');
 
   try {
     const res = await fetch(CSV_URL);
@@ -78,8 +99,11 @@ async function loadSheet() {
     const text = await res.text();
     const rows = parseCSV(text);
     if (rows.length === 0) throw new Error('Sheet appears to be empty.');
+    allRows = rows;
     status.remove();
-    container.appendChild(renderTable(rows));
+    filterBar.hidden = false;
+    document.getElementById('search-input').addEventListener('input', applyFilter);
+    applyFilter();
   } catch (err) {
     status.textContent = `Could not load data: ${err.message}`;
     status.classList.add('error');
