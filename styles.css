@@ -44,6 +44,7 @@ header p {
   align-items: center;
   gap: 12px;
   margin-bottom: 16px;
+  margin-top: 4px;
 }
 
 #search-input {

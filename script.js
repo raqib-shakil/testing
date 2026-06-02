@@ -91,7 +91,6 @@ function applyFilter() {
 async function loadSheet() {
   const container = document.getElementById('sheet-container');
   const status = document.getElementById('sheet-status');
-  const filterBar = document.getElementById('filter-bar');
 
   try {
     const res = await fetch(CSV_URL);
@@ -101,7 +100,6 @@ async function loadSheet() {
     if (rows.length === 0) throw new Error('Sheet appears to be empty.');
     allRows = rows;
     status.remove();
-    filterBar.hidden = false;
     document.getElementById('search-input').addEventListener('input', applyFilter);
     applyFilter();
   } catch (err) {
