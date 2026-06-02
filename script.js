@@ -56,32 +56,34 @@ function buildTable(headers, dataRows) {
   });
   thead.appendChild(headerRow);
 
-  // Filter row with dropdowns
+  // Filter row — dropdown only on the Category column
   const filterRow = document.createElement('tr');
   filterRow.className = 'filter-row';
-  headers.forEach((_, colIndex) => {
+  headers.forEach((header, colIndex) => {
     const th = document.createElement('th');
-    const select = document.createElement('select');
-    select.dataset.colIndex = colIndex;
+    if (header.trim().toLowerCase() === 'category') {
+      const select = document.createElement('select');
+      select.dataset.colIndex = colIndex;
 
-    const uniqueVals = [...new Set(
-      dataRows.map(row => (row[colIndex] ?? '').trim())
-    )].filter(v => v !== '').sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+      const uniqueVals = [...new Set(
+        dataRows.map(row => (row[colIndex] ?? '').trim())
+      )].filter(v => v !== '').sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
 
-    const allOpt = document.createElement('option');
-    allOpt.value = '';
-    allOpt.textContent = 'All';
-    select.appendChild(allOpt);
+      const allOpt = document.createElement('option');
+      allOpt.value = '';
+      allOpt.textContent = 'All';
+      select.appendChild(allOpt);
 
-    uniqueVals.forEach(val => {
-      const opt = document.createElement('option');
-      opt.value = val;
-      opt.textContent = val;
-      select.appendChild(opt);
-    });
+      uniqueVals.forEach(val => {
+        const opt = document.createElement('option');
+        opt.value = val;
+        opt.textContent = val;
+        select.appendChild(opt);
+      });
 
-    select.addEventListener('change', applyFilter);
-    th.appendChild(select);
+      select.addEventListener('change', applyFilter);
+      th.appendChild(select);
+    }
     filterRow.appendChild(th);
   });
   thead.appendChild(filterRow);
