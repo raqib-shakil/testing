@@ -42,10 +42,12 @@ function parseCSV(text) {
 
 let allRows = [];
 
-function renderTable(dataRows, headers) {
+function buildTable(headers, dataRows) {
   const table = document.createElement('table');
 
   const thead = document.createElement('thead');
+
+  // Header row
   const headerRow = document.createElement('tr');
   headers.forEach(cell => {
     const th = document.createElement('th');
@@ -53,9 +55,49 @@ function renderTable(dataRows, headers) {
     headerRow.appendChild(th);
   });
   thead.appendChild(headerRow);
+
+  // Filter row with dropdowns
+  const filterRow = document.createElement('tr');
+  filterRow.className = 'filter-row';
+  headers.forEach((_, colIndex) => {
+    const th = document.createElement('th');
+    const select = document.createElement('select');
+    select.dataset.colIndex = colIndex;
+
+    const uniqueVals = [...new Set(
+      dataRows.map(row => (row[colIndex] ?? '').trim())
+    )].filter(v => v !== '').sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+
+    const allOpt = document.createElement('option');
+    allOpt.value = '';
+    allOpt.textContent = 'All';
+    select.appendChild(allOpt);
+
+    uniqueVals.forEach(val => {
+      const opt = document.createElement('option');
+      opt.value = val;
+      opt.textContent = val;
+      select.appendChild(opt);
+    });
+
+    select.addEventListener('change', applyFilter);
+    th.appendChild(select);
+    filterRow.appendChild(th);
+  });
+  thead.appendChild(filterRow);
   table.appendChild(thead);
 
   const tbody = document.createElement('tbody');
+  tbody.id = 'table-body';
+  table.appendChild(tbody);
+
+  return table;
+}
+
+function updateBody(dataRows) {
+  const tbody = document.getElementById('table-body');
+  if (!tbody) return;
+  tbody.innerHTML = '';
   dataRows.forEach(rowData => {
     const tr = document.createElement('tr');
     rowData.forEach(cell => {
@@ -65,26 +107,27 @@ function renderTable(dataRows, headers) {
     });
     tbody.appendChild(tr);
   });
-  table.appendChild(tbody);
-
-  return table;
 }
 
 function applyFilter() {
   const query = document.getElementById('search-input').value.toLowerCase().trim();
-  const container = document.getElementById('sheet-container');
   const rowCount = document.getElementById('row-count');
-
-  const headers = allRows[0];
   const dataRows = allRows.slice(1);
 
-  const filtered = query
-    ? dataRows.filter(row => row.some(cell => cell.toLowerCase().includes(query)))
-    : dataRows;
+  const colFilters = {};
+  document.querySelectorAll('select[data-col-index]').forEach(sel => {
+    if (sel.value) colFilters[parseInt(sel.dataset.colIndex)] = sel.value;
+  });
 
-  container.innerHTML = '';
-  container.appendChild(renderTable(filtered, headers));
+  const filtered = dataRows.filter(row => {
+    if (query && !row.some(cell => cell.toLowerCase().includes(query))) return false;
+    for (const [idx, val] of Object.entries(colFilters)) {
+      if ((row[parseInt(idx)] ?? '').trim() !== val) return false;
+    }
+    return true;
+  });
 
+  updateBody(filtered);
   rowCount.textContent = `${filtered.length} of ${dataRows.length} row${dataRows.length !== 1 ? 's' : ''}`;
 }
 
@@ -100,6 +143,8 @@ async function loadSheet() {
     if (rows.length === 0) throw new Error('Sheet appears to be empty.');
     allRows = rows;
     status.remove();
+
+    container.appendChild(buildTable(rows[0], rows.slice(1)));
     document.getElementById('search-input').addEventListener('input', applyFilter);
     applyFilter();
   } catch (err) {
