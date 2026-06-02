@@ -154,6 +154,7 @@ function toggleAddForm() {
 }
 
 function showAddForm() {
+  if (!allRows.length) return;
   const headers = allRows[0];
   const inputs = [];
 
@@ -241,7 +242,6 @@ async function loadSheet() {
 
     container.appendChild(buildTable(rows[0], rows.slice(1)));
     document.getElementById('search-input').addEventListener('input', applyFilter);
-    document.getElementById('add-btn').addEventListener('click', toggleAddForm);
     applyFilter();
   } catch (err) {
     status.textContent = `Could not load data: ${err.message}`;
@@ -249,4 +249,5 @@ async function loadSheet() {
   }
 }
 
+document.getElementById('add-btn').addEventListener('click', toggleAddForm);
 loadSheet();
